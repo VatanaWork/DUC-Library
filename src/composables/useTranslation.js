@@ -4,7 +4,7 @@
 import { ref, computed } from 'vue'
 
 const translations = ref({})
-const currentLang = ref(localStorage.getItem('appLang') || 'en')
+const currentLang = ref(localStorage.getItem('appLang') || 'kh')
 
 export function useTranslation() {
 

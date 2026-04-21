@@ -1,5 +1,19 @@
 <template>
-  <div class="app-frame" :class="{ 'light-mode': isLightMode }">
+  <div class="app-frame" :class="{ 'light-mode': isLightMode, 'is-sub-page': isSubPage }">
+    <div :class="['logout-modal-overlay', { hidden: !showLogoutModal }]" @click.self="showLogoutModal = false">
+      <div class="logout-modal-box">
+        <div class="logout-icon-circle">
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h3 class="logout-title">{{ t('logout_title', 'ចាកចេញពីគណនី?') }}</h3>
+        <p class="logout-desc">{{ t('logout_desc', 'តើអ្នកពិតជាចង់ចាកចេញពីប្រព័ន្ធមែនទេ? អ្នកនឹងត្រូវ Login ចូលម្តងទៀតនៅពេលក្រោយ។') }}</p>
+        
+        <div class="logout-actions">
+          <button class="logout-btn-cancel" @click="showLogoutModal = false">{{ t('btn_cancel', 'បោះបង់') }}</button>
+          <button class="logout-btn-confirm" @click="confirmLogout">{{ t('btn_confirm_logout', 'ចាកចេញ') }}</button>
+        </div>
+      </div>
+    </div>
 
     <div v-if="isLoading" class="global-loader">
       <div class="global-spinner"></div>
@@ -26,7 +40,9 @@
       <div class="header-actions">
         <div class="notif-box" @click="openNotificationPage">
           <i class="far fa-bell"></i>
-          <div class="notif-badge" v-if="unreadCount > 0"></div>
+          <div class="notif-badge" v-if="unreadCount > 0">
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+          </div>
         </div>
         <div class="user-avatar" @click="switchView('profile')"></div>
       </div>
@@ -294,15 +310,12 @@
               <span class="pass-label">OFFICIAL MEMBER</span>
               <i class="fas fa-crown pass-icon"></i>
             </div>
-            <div class="qr-frame">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LibraryMember" alt="QR" class="qr-img" />
-            </div>
-            <div class="pass-footer">
-              <div class="action-pill">
-                <button class="pill-btn" @click.stop="downloadCard"><i class="fas fa-download"></i></button>
-                <div class="pill-divider"></div>
-                <button class="pill-btn" @click.stop="shareCard"><i class="fas fa-share-nodes"></i></button>
+            
+            <div class="qr-container">
+              <div class="qr-frame">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LibraryMember" alt="QR" class="qr-img" />
               </div>
+              <div class="qr-scan-line"></div>
             </div>
           </div>
         </div>
@@ -327,7 +340,7 @@
               <div class="set-content">
                 <span>{{ t('lbl_dark_mode','Dark Mode') }}</span>
                 <label class="switch">
-                  <input type="checkbox" v-model="isLightMode" @change="toggleTheme" />
+                  <input type="checkbox" v-model="isLightMode" :true-value="false" :false-value="true" @change="toggleTheme" />
                   <span class="slider"></span>
                 </label>
               </div>
@@ -403,7 +416,7 @@
 
       <div class="settings-wrapper" style="margin-top: 20px;">
         <button class="logout-btn-pro" @click="logout">{{ t('btn_logout','Log Out') }}</button>
-        <p class="version-text">{{ t('lbl_version','Version 3.1.0 • Created by Vatana') }}</p>
+        <p class="version-text">{{ t('lbl_version','Version 1.0.0 • Created by Vatana') }}</p>
       </div>
       <div class="bottom-spacer"></div>
     </div>
@@ -663,15 +676,23 @@
           <p>{{ t('nl_empty','You have no new notifications right now.') }}</p>
         </div>
 
-        <div class="notif-list-clean">
-          <div v-for="item in notifications" :key="item.id" :class="['clean-card', { unread: !item.read }]">
+        <div class="notif-list-clean" style="overflow-x: hidden;">
+          <div v-for="item in notifications" :key="item.id" 
+               :id="'notif-' + item.id"
+               :class="['clean-card', { unread: !item.read }]" 
+               @click="markAsRead(item.id)" 
+               @touchstart="onTouchStart"
+               @touchend="onTouchEnd($event, item.id)"
+               style="cursor: pointer; transition: transform 0.3s ease, opacity 0.3s ease;">
+               
             <div :class="['clean-icon', item.type]">
               <i :class="['fas', item.type === 'success' ? 'fa-check' : item.type === 'error' ? 'fa-exclamation' : 'fa-info']"></i>
             </div>
+            
             <div class="clean-content">
               <div class="c-title">{{ item.title }}</div>
               <div class="c-msg">{{ item.message }}</div>
-              <div class="c-time">{{ item.time }}</div>
+              <div class="c-time">{{ formatNotifDate(item.time) }}</div>
             </div>
             <div v-if="!item.read" class="unread-dot"></div>
           </div>
@@ -801,6 +822,7 @@
 </template>
 
 <script setup>
+const showLogoutModal = ref(false)
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import SubPageHeader from '../components/SubPageHeader.vue'
@@ -816,7 +838,7 @@ const { t, currentLang, loadTranslations, setLanguage } = useTranslation()
 const isLoading = ref(false)
 const toasts = ref([])
 const currentView = ref('home')
-const isLightMode = ref(localStorage.getItem('theme') === 'light')
+const isLightMode = ref(localStorage.getItem('theme') === 'dark')
 
 const currentUser = ref(JSON.parse(sessionStorage.getItem('currentUser')))
 const cardNumber = ref('')
@@ -937,6 +959,30 @@ const isSubPage = computed(() => {
   return subs.includes(currentView.value)
 })
 
+// អនុគមន៍បំប្លែងថ្ងៃខែសម្រាប់ Notification
+function formatNotifDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  
+  // ការពារ Error បើទម្រង់ខុស
+  if (isNaN(d.getTime())) return dateStr; 
+
+  // បង្ហាញចេញជាទម្រង់ ឧទាហរណ៍៖ 31 Mar 2026, 12:00 AM
+  const datePart = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  
+  return `${datePart}, ${timePart}`;
+}
+
+// បន្ថែមមុខងារនេះចូលទៅក្នុង <script setup> របស់អ្នក
+function truncateTitle(text, maxLength) {
+  if (!text) return '';
+  // បើឈ្មោះសៀវភៅខ្លីជាងឬស្មើចំនួនដែលកំណត់ នោះបង្ហាញឈ្មោះពេញ
+  if (text.length <= maxLength) return text; 
+  // បើវែងជាង គឺកាត់យកត្រឹមចំនួនដែលកំណត់ រួចថែម ... ពីក្រោយ
+  return text.substring(0, maxLength) + '...';
+}
+
 const currentPageTitle = computed(() => {
   const map = { home: 'page_discover', books: 'lib_view_header', borrowed: 'shelf_view_header', favourite: 'fav_view_header', profile: 'pro_view_header' }
   return t(map[currentView.value] || 'page_discover', 'Discover')
@@ -1024,10 +1070,93 @@ function switchView(view) {
   if (frame) frame.scrollTo(0, 0)
 }
 
+// ១. ពេលចុចកណ្តឹង គ្រាន់តែបើក Tab ធម្មតា (លែងឱ្យវាលុបលេខកណ្តឹងអូតូទៀតហើយ)
 function openNotificationPage() {
-  unreadCount.value = 0
-  notifications.value = notifications.value.map(n => ({ ...n, read: true }))
   switchView('notifications')
+}
+
+// ២. ទាញយកសារ និងរៀបសារថ្មីឱ្យនៅលើគេ
+async function backgroundCheckNotifs() {
+  const u = JSON.parse(sessionStorage.getItem('currentUser'))
+  if (!u) return
+  try {
+    await fetchMyRequests()
+    const data = await requestsApi.myNotifications(u.email)
+    if (data.force_logout) {
+      alert('អ្នកត្រូវបាន Sign out ដោយ Admin។')
+      sessionStorage.removeItem('currentUser')
+      router.push('/')
+      return
+    }
+    // បន្ថែមពាក្យ .reverse() ដើម្បីឱ្យសារថ្មីៗ (ចុងក្រោយគេ) ត្រូវរុញមកលើគេ
+    const arr = Array.isArray(data) ? data.reverse() : [] 
+    const readIds = JSON.parse(localStorage.getItem('readNotificationIds')) || []
+    
+    notifications.value = arr.map(n => ({ ...n, read: readIds.includes(n.id) }))
+    unreadCount.value = notifications.value.filter(n => !n.read).length
+  } catch (e) { console.error(e) }
+}
+
+// ៣. អនុគមន៍សម្រាប់ចុច Mark ថាបានអានរួច (Read) ម្តងមួយៗ
+function markAsRead(id) {
+  const notif = notifications.value.find(n => n.id === id)
+  if (notif && !notif.read) {
+    notif.read = true // ដកសញ្ញាចុចក្រហមចេញ
+    
+    // បន្ថយលេខកណ្តឹងភ្លាមៗ
+    unreadCount.value = notifications.value.filter(n => !n.read).length
+    
+    // កត់ត្រាចូលក្នុង LocalStorage ថាបានអានរួច
+    const readIds = JSON.parse(localStorage.getItem('readNotificationIds')) || []
+    if (!readIds.includes(id)) {
+      readIds.push(id)
+      localStorage.setItem('readNotificationIds', JSON.stringify(readIds))
+    }
+  }
+}
+
+// ==========================================
+// មុខងារ Swipe ពីស្តាំទៅឆ្វេងដើម្បីលុប Notification
+// ==========================================
+let touchStartX = 0
+let touchStartY = 0
+
+// ចាប់យកទីតាំងពេលចាប់ផ្តើមប៉ះ
+function onTouchStart(e) {
+  touchStartX = e.changedTouches[0].screenX
+  touchStartY = e.changedTouches[0].screenY
+}
+
+// គណនាពេលដកដៃចេញ ថាតើគាត់អូសទៅឆ្វេងឬអត់
+function onTouchEnd(e, id) {
+  const touchEndX = e.changedTouches[0].screenX
+  const touchEndY = e.changedTouches[0].screenY
+  
+  const deltaX = touchStartX - touchEndX // គណនាចម្ងាយអូសផ្តេក
+  const deltaY = Math.abs(touchStartY - touchEndY) // គណនាចម្ងាយអូសបញ្ឈរ
+
+  // បើគាត់អូសទៅឆ្វេងលើសពី ៥០px ហើយមិនមែនជាការអូសឡើងចុះ (Scroll)
+  if (deltaX > 50 && deltaY < 40) {
+    deleteNotification(id)
+  }
+}
+
+// មុខងារលុប និងដាក់ Animation
+function deleteNotification(id) {
+  const el = document.getElementById('notif-' + id)
+  if (el) {
+    // ដាក់ Class ឱ្យវារត់ចេញទៅឆ្វេងយ៉ាង Smooth
+    el.classList.add('swiped-out-left')
+    
+    // រង់ចាំ 0.3s ឱ្យ Animation ដើរចប់ សឹមលុបចេញពី Data
+    setTimeout(() => {
+      notifications.value = notifications.value.filter(n => n.id !== id)
+      // អាប់ដេតលេខលើកណ្តឹង
+      unreadCount.value = notifications.value.filter(n => !n.read).length
+      
+      // បើចង់ឱ្យលុបចូលទៅក្នុង LocalStorage ឬ API អាចបន្ថែមនៅទីនេះបាន
+    }, 300)
+  }
 }
 
 function setHomeCategory(val) {
@@ -1104,6 +1233,10 @@ function openBorrowModal() {
 async function submitBorrowRequest() {
   const u = JSON.parse(sessionStorage.getItem('currentUser'))
   if (!u || !selectedBook.value) return
+
+  // ១. បើកផ្ទាំង Loading វិលៗ ពេលចាប់ផ្តើមផ្ញើសំណើ
+  isLoading.value = true
+
   try {
     const data = await requestsApi.borrowBook({
       email: u.email,
@@ -1112,14 +1245,27 @@ async function submitBorrowRequest() {
       start_date: borrowForm.value.start,
       end_date: borrowForm.value.end
     })
+    
     if (data.success) {
-      showToast('Request submitted successfully!', 'success')
+      // ២. បង្ហាញសារ Alert ជោគជ័យ ដោយប្រើមុខងារបកប្រែ t()
+      showToast(t('borrow_success_msg', 'Request submitted successfully!'), 'success')
+      
+      // បិទផ្ទាំង Form ខ្ចីសៀវភៅ
       showBorrowModal.value = false
+      
+      // ទាញយកទិន្នន័យសាជាថ្មី ដើម្បី Update ស្ថានភាពសៀវភៅ
       await fetchMyRequests()
     } else {
-      showToast(data.message, 'error')
+      // ៣. បង្ហាញសារ Alert ពេលមាន Error ពី Server (ប្រើការបកប្រែដូចគ្នា)
+      showToast(t('borrow_error_msg', data.message || 'Failed to borrow book'), 'error')
     }
-  } catch (e) { showToast('Connection error', 'error') }
+  } catch (e) {
+    // ៤. បង្ហាញសារ Error ពេលដាច់អុីនធឺណិត ឬភ្ជាប់ទៅ Server មិនបាន
+    showToast(t('error_connection', 'Connection error. Please try again.'), 'error')
+  } finally {
+    // ៥. បិទផ្ទាំង Loading វិញជានិច្ច ទោះបីជាផ្ញើជោគជ័យ ឬមានបញ្ហាក៏ដោយ
+    isLoading.value = false
+  }
 }
 
 function returnFromShelf(e, id) {
@@ -1256,13 +1402,43 @@ function openMap() {
 async function downloadCard() { showToast('Card saved to photos', 'success') }
 async function shareCard() { showToast('Sharing...', 'success') }
 
-async function logout() {
-  if (!confirm('Log out?')) return
-  const u = JSON.parse(sessionStorage.getItem('currentUser'))
-  if (u) await authApi.logout(u.email, sessionStorage.getItem('session_id'))
-  sessionStorage.removeItem('currentUser')
-  sessionStorage.removeItem('session_id')
-  router.push('/')
+// ១. មុខងារនេះគ្រាន់តែហៅផ្ទាំង Popup ឱ្យលោតចេញមក (ភ្ជាប់ជាមួយប៊ូតុង Logout ចាស់)
+function logout() {
+  showLogoutModal.value = true
+}
+
+// ២. មុខងារនេះទើបជាការ Logout ពិតប្រាកដ (ដំណើរការពេលគេចុចពាក្យ "ចាកចេញ" លើផ្ទាំង Popup)
+async function confirmLogout() {
+  // ១. បិទផ្ទាំងសួររំលឹក (Modal)
+  showLogoutModal.value = false
+  
+  // ២. បើកផ្ទាំង Loading វិលៗ (Global Loader)
+  isLoading.value = true
+  
+  try {
+    const u = JSON.parse(sessionStorage.getItem('currentUser'))
+    if (u) {
+      // ធ្វើការហៅ API ដើម្បីប្រាប់ Server ថាគណនីនេះបាន Logout
+      await authApi.logout(u.email, sessionStorage.getItem('session_id'))
+    }
+    
+    // លុបទិន្នន័យចេញពីម៉ាសុីន
+    sessionStorage.removeItem('currentUser')
+    sessionStorage.removeItem('session_id')
+    
+    // កត់ត្រាសារជោគជ័យ
+    sessionStorage.setItem('flashMessage', 'បានចាកចេញពីគណនីដោយជោគជ័យ!')
+    
+    // ៣. លោតទៅទំព័រ Login
+    router.push('/')
+    
+  } catch (error) {
+    console.error('Logout error:', error)
+    showToast('មានបញ្ហាក្នុងការភ្ជាប់ទៅកាន់ Server', 'error')
+  } finally {
+    // ៤. បិទ Loading វិញជានិច្ច ទោះបីជាជោគជ័យ ឬមាន Error ក៏ដោយ
+    isLoading.value = false
+  }
 }
 
 // ===== DATA FETCHING =====
@@ -1282,69 +1458,81 @@ async function fetchMyRequests() {
   } catch (e) { console.error(e) }
 }
 
-async function backgroundCheckNotifs() {
-  const u = JSON.parse(sessionStorage.getItem('currentUser'))
-  if (!u) return
-  try {
-    await fetchMyRequests()
-    const data = await requestsApi.myNotifications(u.email)
-    if (data.force_logout) {
-      alert('អ្នកត្រូវបាន Sign out ដោយ Admin។')
-      sessionStorage.removeItem('currentUser')
-      router.push('/')
-      return
-    }
-    const arr = Array.isArray(data) ? data : []
-    const readIds = JSON.parse(localStorage.getItem('readNotificationIds')) || []
-    notifications.value = arr.map(n => ({ ...n, read: readIds.includes(n.id) }))
-    unreadCount.value = notifications.value.filter(n => !n.read).length
-  } catch (e) { console.error(e) }
-}
-
 async function sendPulse() {
   const u = JSON.parse(sessionStorage.getItem('currentUser'))
   if (!u) return
   try { await authApi.heartbeat(u.email, sessionStorage.getItem('session_id')) } catch (e) {}
 }
 
+// បន្ថែមមុខងារ watch នេះដើម្បីត្រួតពិនិត្យពេលផ្ទាំង Detail បើកឬបិទ
+watch(showDetail, (isOpen) => {
+  if (isOpen) {
+    // ពេលបើកផ្ទាំង Detail បិទមិនឱ្យ Scroll ខាងក្រោយបាន
+    document.body.style.overflow = 'hidden';
+  } else {
+    // ពេលបិទផ្ទាំង Detail បើកឱ្យ Scroll បានធម្មតាវិញ
+    document.body.style.overflow = '';
+  }
+});
+
 // ===========================
 // LIFECYCLE
 // ===========================
 onMounted(async () => {
-// 1. ទាញយក Theme ចាស់ដែលធ្លាប់បាន Save
-  isLightMode.value = localStorage.getItem('theme') === 'light'
+  // ១. កំណត់ Theme ជា Light សម្រាប់ User ថ្មី
+  let savedTheme = localStorage.getItem('theme')
+  if (!savedTheme) {
+    savedTheme = 'light'
+    localStorage.setItem('theme', 'light') // Save ចូលម៉ាសុីនភ្លាមៗ
+  }
+  isLightMode.value = savedTheme === 'light'
   
-  // 2. អនុវត្ត Theme នោះទៅលើ <body> ភ្លាមៗពេលទំព័រលោតចេញមក
   if (isLightMode.value) {
     document.body.classList.add('light-mode')
   } else {
     document.body.classList.remove('light-mode')
   }
+  
   const u = JSON.parse(sessionStorage.getItem('currentUser'))
   if (!u) { router.push('/'); return }
   currentUser.value = u
 
-  // Card number
-  cardNumber.value = `4000 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} 8842`
+  // ២. ឆែកមើលសារ Flash Message ពី Login
+  const flashMsg = sessionStorage.getItem('flashMessage')
 
-  // Edit form defaults
-  editForm.value = { name: u.name || '', phone: u.phone || '', bio: u.bio || '' }
+  // ៣. បើ "គ្មាន" សារហោះមកពី Login ទេ (ឧ. គាត់ Refresh ទំព័រ) ទើបយើងបង្ហាញ Loading
+  if (!flashMsg) {
+    isLoading.value = true
+  } else {
+    // បើមានសារ (ទើប Login ជោគជ័យ) យើងបង្ហាញសារ រួចអត់បើក Loading ទេ!
+    showToast(flashMsg, 'success')
+    sessionStorage.removeItem('flashMessage')
+  }
 
-  isLoading.value = true
-  await loadTranslations()
+  // ៤. ទាញយកទិន្នន័យព្រមៗគ្នា (រត់នៅ Background យ៉ាងស្ងាត់ៗបើទើប Login ចូល)
   try {
-    await fetchBooks()
-    await fetchMyRequests()
-    await backgroundCheckNotifs()
-  } catch (e) { console.error(e) }
+    await Promise.all([
+      loadTranslations(),
+      fetchBooks(),
+      fetchMyRequests(),
+      backgroundCheckNotifs()
+    ])
+  } catch (e) { 
+    console.error(e) 
+  }
+  
+  // ៥. បិទ Loading វិញ (ទោះបើកឬមិនបើកក៏ដោយ)
   isLoading.value = false
 
-  // Intervals
+  // ៦. កូដចាស់បន្តទៀត... (Interval, Card Number...)
+  cardNumber.value = `4000 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} 8842`
+
+  editForm.value = { name: u.name || '', phone: u.phone || '', bio: u.bio || '' }
+
   notifInterval = setInterval(backgroundCheckNotifs, 5000)
   heartbeatInterval = setInterval(sendPulse, 30000)
   sendPulse()
 
-  // Carousel auto scroll
   autoScrollInterval = setInterval(() => {
     if (!carouselRef.value || allBooks.value.length === 0) return
     const c = carouselRef.value
@@ -1352,12 +1540,8 @@ onMounted(async () => {
     else c.scrollBy({ left: c.offsetWidth, behavior: 'smooth' })
   }, 4000)
 
-  // Sticky search listener — on app-frame, not window
   const appFrame = document.querySelector('.app-frame')
   if (appFrame) appFrame.addEventListener('scroll', handleScroll)
-
-  // Theme
-  if (isLightMode.value) document.body.classList.add('light-mode')
 })
 
 onUnmounted(() => {

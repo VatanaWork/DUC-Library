@@ -25,9 +25,13 @@ export async function apiPost(payload) {
 export const authApi = {
   login: (email, password) => apiPost({ action: 'login', email, password }),
   register: (name, email, password) => apiPost({ action: 'register', name, email, password }),
+  googleLogin: (name, email, picture) => apiPost({ action: 'googleLogin', name, email, picture }),
   logout: (email, session_id) => apiPost({ action: 'logout', email, session_id }),
   heartbeat: (email, session_id, role) => apiPost({ action: 'heartbeat', email, session_id: parseInt(session_id), role }),
   getUserDetails: (email) => apiPost({ action: 'getUserDetails', email }),
+  forgotPassword: (email) => apiPost({ action: 'forgotPassword', email }),
+  verifyOTP: (email, otp) => apiPost({ action: 'verifyOTP', email, otp }),
+  resetPassword: (email, new_password) => apiPost({ action: 'resetPassword', email, new_password }),
 }
 
 // ==============================

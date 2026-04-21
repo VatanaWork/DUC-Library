@@ -12,7 +12,7 @@
     --style-range: #ffffff1a;
     --bg-smoke: #18181b;
     --bg-btn-cancel: rgba(255, 255, 255, 0.1);
-    --text-normal: white; 
+    --text-normal: white;
 }
 
 body.light-mode {
@@ -29,7 +29,7 @@ body.light-mode {
     --style-range: #0000001a;
     --bg-smoke: whitesmoke;
     --bg-btn-cancel: rgba(0, 0, 0, 0.1);
-    --text-normal: black; 
+    --text-normal: black;
 }
 
 * {
@@ -264,9 +264,154 @@ body {
     color: #ef4444;
 }
 
+/* =========================================
+   Modern Logout Confirmation Modal
+   ========================================= */
+.logout-modal-overlay {
+    position: fixed;
+    inset: 0;
+    /* គ្របពេញអេក្រង់ */
+    background: rgba(15, 23, 42, 0.6);
+    /* ពណ៌ខ្មៅព្រិលៗពីក្រោយ */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+}
+
+.logout-modal-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ប្រអប់ Modal ផ្ទាល់ */
+.logout-modal-box {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 30px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transform: scale(1) translateY(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* ចលនាលោតរលាក់តិចៗ */
+}
+
+.logout-modal-overlay.hidden .logout-modal-box {
+    transform: scale(0.9) translateY(20px);
+}
+
+/* Light Mode Support */
+body.light-mode .logout-modal-box {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Icon ខាងលើ */
+.logout-icon-circle {
+    width: 60px;
+    height: 60px;
+    background: rgba(239, 68, 68, 0.15);
+    /* ពណ៌ក្រហមស្រាល */
+    color: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 15px auto;
+}
+
+/* អត្ថបទ */
+.logout-title {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f8fafc;
+    font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+}
+
+body.light-mode .logout-title {
+    color: #0f172a;
+}
+
+.logout-desc {
+    margin: 0 0 25px 0;
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.5;
+    font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+}
+
+body.light-mode .logout-desc {
+    color: #64748b;
+}
+
+/* ប៊ូតុង */
+.logout-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.logout-btn-cancel,
+.logout-btn-confirm {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+}
+
+.logout-btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+}
+
+body.light-mode .logout-btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.logout-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+body.light-mode .logout-btn-cancel:hover {
+    background: #e2e8f0;
+}
+
+.logout-btn-confirm {
+    background: #ef4444;
+    /* ពណ៌ក្រហមបញ្ជាក់ពីការចាកចេញ */
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-btn-confirm:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+.logout-btn-confirm:active {
+    transform: translateY(0);
+}
+
 .toast-msg {
     font-size: 14px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Kantumruy Pro', 'Inter', sans-serif;
     line-height: 1.4;
     font-weight: 500;
 }
@@ -326,13 +471,40 @@ header.hidden-header {
 
 .notif-badge {
     position: absolute;
-    top: 10px;
-    right: 12px;
-    width: 6px;
-    height: 6px;
+    top: -5px;
+    right: -5px;
     background-color: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    font-family: Arial, sans-serif;
     border-radius: 50%;
-    box-shadow: 0 0 0 2px var(--bg-main);
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+    border: 2px solid var(--bg-main);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ==========================================================
+   SWIPE TO DELETE ANIMATION
+   ========================================================== */
+.clean-card.swiped-out-left {
+    transform: translateX(-120%) !important;
+    opacity: 0 !important;
+    margin-bottom: -70px; /* ធ្វើឱ្យកាតខាងក្រោមរុញឡើងមកលើវិញយ៉ាង Smooth */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
 }
 
 .header-title h3 {
@@ -499,6 +671,7 @@ header.hidden-header {
     border-radius: 50%;
     transition: 0.3s;
 }
+
 .stat-pill-num,
 .stat-pill-label {
     color: var(--text-normal);
@@ -549,12 +722,12 @@ header.hidden-header {
 }
 
 .h-book-title {
-    font-size: 14px;
-    color: var(--text-white);
-    font-weight: 600;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-white);
 }
 
 .h-book-auth {
@@ -621,13 +794,15 @@ header.hidden-header {
 .row-title {
     font-family: 'Playfair Display', serif;
     font-size: 16px;
-    font-weight: 600;
     color: var(--text-white);
-    max-width: 100%;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    /* កំណត់ត្រឹម ១ បន្ទាត់ (អ្នកអាចដូរទៅ 2 បើចង់ឱ្យចេញ ២បន្ទាត់) */
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
+    word-break: break-word;
+    max-width: 100%;
 }
 
 .row-author {
@@ -1032,16 +1207,140 @@ header.hidden-header {
     overflow: hidden;
 }
 
-.card-back {
-    background: #111;
+/* ==========================================================
+   MODERN ACCESS PASS (CARD BACK)
+   ========================================================== */
+
+/* ផ្ទៃកាតផ្នែកខាងក្រោយ (Modern Dark Glassmorphism & Gradient) */
+.card-back.modern-access-pass {
+    background: linear-gradient(145deg, #1a1a24 0%, #0d0d14 100%);
     transform: rotateY(180deg);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    border: 2px solid var(--accent);
+    justify-content: space-between;
+    padding: 20px;
+    border: 1px solid rgba(212, 175, 55, 0.3); /* ខ្សែបន្ទាត់ពណ៌មាសស្រាលៗ */
+    border-radius: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.5);
     color: white;
 }
+
+/* ផ្នែកខាងលើនៃកាត (Header) */
+.pass-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.pass-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-gray);
+}
+
+.pass-icon {
+    color: var(--accent); /* ពណ៌មាស */
+    font-size: 16px;
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+/* ផ្នែកកណ្តាលផ្ទុក QR Code */
+.qr-container {
+    position: relative;
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin: 15px 0;
+}
+
+.qr-frame {
+    background: #fff;
+    padding: 6px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 8px;
+}
+
+/* ចលនាខ្សែបន្ទាត់ Scan ពណ៌មាស */
+.qr-scan-line {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: scanLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    border-radius: 50%;
+    pointer-events: none; /* មិនឱ្យវាប៉ះពាល់ពេលចុចលើ QR */
+}
+
+@keyframes scanLine {
+    0%   { top: 10px; opacity: 0; }
+    10%  { opacity: 1; }
+    45%  { top: 100px; opacity: 1; } /* រត់ចុះមកក្រោម */
+    50%  { opacity: 0; }
+    100% { top: 100px; opacity: 0; }
+}
+
+/* ប្រអប់ប៊ូតុងរាងជាគ្រាប់ថ្នាំ (Glassmorphism Pill) */
+.action-pill {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 4px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.pill-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 14px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pill-btn:hover {
+    color: var(--accent);
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
+}
+
+.pill-btn:active {
+    transform: translateY(0);
+}
+
+.pill-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 5px;
+}
+
 
 .card-shine {
     position: absolute;
@@ -1382,17 +1681,16 @@ input:checked+.slider:before {
     border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-around;
-    padding: 10px 0 10px 0;
     z-index: 100;
 }
 
 .nav-icon {
     color: var(--text-gray);
-    font-size: 22px;
+    font-size: 18px;
     position: relative;
     cursor: pointer;
     transition: color 0.3s;
-    padding: 15px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1812,7 +2110,7 @@ input:checked+.slider:before {
 
 .borrow-form-card {
     position: relative;
-    background: #18181b;
+    background: var(--bg-smoke);
     width: 90%;
     max-width: 350px;
     padding: 25px;
@@ -1890,7 +2188,7 @@ input:checked+.slider:before {
 
 .cancel-btn {
     flex: 1;
-    background: transparent;
+    background: var(--bg-btn-cancel);
     color: var(--text-gray);
     border: 1px solid var(--border);
     padding: 12px;
@@ -1944,29 +2242,52 @@ input:checked+.slider:before {
     padding: 0 0 30px 0;
 }
 
-.stats-scroll {
-    display: flex;
-    gap: 12px;
-    padding: 0 24px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
+/* ==========================================================
+   LIBRARY INSIGHTS (STATS PILL) - Force 3 Columns
+   ========================================================== */
 
-.stats-scroll::-webkit-scrollbar {
-    display: none;
+.stats-scroll {
+    display: grid;
+    /* បង្ខំឱ្យមាន ៣ ជួរ (Columns) ជានិច្ច ទោះអេក្រង់តូចឬធំ */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px; /* បន្ថយចន្លោះបន្តិច ដើម្បីសន្សំទំហំលើទូរស័ព្ទ */
+    padding: 0 24px;
 }
 
 .stat-pill {
-    min-width: 130px;
-    flex: 1;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     border: 1px solid var(--border);
-    padding: 16px;
+    padding: 12px 8px; /* បន្ថយ Padding ខាងក្នុងបន្តិចកុំឱ្យចង្អៀតអក្សរ */
     border-radius: 14px;
     display: flex;
     flex-direction: column;
+    align-items: center; 
     justify-content: center;
+    text-align: center;
     gap: 4px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-pill:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-pill-icon {
+    font-size: 18px; /* បន្ថយទំហំ Icon បន្តិច */
+    color: var(--accent);
+}
+
+.stat-pill-num {
+    font-size: 16px; /* បន្ថយទំហំលេខបន្តិច */
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.stat-pill-label {
+    font-size: 10px; /* បន្ថយទំហំអក្សរបន្តិច ដើម្បីកុំឱ្យធ្លាក់ជួរវែងពេក */
+    color: var(--text-gray);
+    line-height: 1.2;
 }
 
 /* ==========================================================
@@ -1985,14 +2306,16 @@ input:checked+.slider:before {
 .clean-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: clamp(12px, 1.5vw, 16px); /* Subtle, elegant rounding */
+    border-radius: clamp(12px, 1.5vw, 16px);
+    /* Subtle, elegant rounding */
     padding: clamp(16px, 2vw, 20px);
     display: flex;
     align-items: flex-start;
     gap: clamp(14px, 2vw, 18px);
     position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Very soft shadow */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    /* Very soft shadow */
 }
 
 /* Refined Hover State */
@@ -2005,7 +2328,8 @@ input:checked+.slider:before {
 /* --- Elegant Unread State --- */
 .clean-card.unread {
     background: linear-gradient(to right, rgba(212, 175, 55, 0.03), transparent 50%);
-    border-left: 3px solid var(--accent); /* Clean accent line */
+    border-left: 3px solid var(--accent);
+    /* Clean accent line */
 }
 
 .unread-dot {
@@ -2031,9 +2355,20 @@ input:checked+.slider:before {
 }
 
 /* Pastel/Muted icon backgrounds for a professional look */
-.clean-icon.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.clean-icon.error   { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-.clean-icon.info    { background: rgba(255, 255, 255, 0.05); color: var(--text-white); }
+.clean-icon.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.clean-icon.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.clean-icon.info {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-white);
+}
 
 /* --- Crisp Typography --- */
 .clean-content {
@@ -2041,7 +2376,8 @@ input:checked+.slider:before {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-right: 20px; /* Space for unread dot */
+    padding-right: 20px;
+    /* Space for unread dot */
 }
 
 .c-title {
@@ -2119,7 +2455,8 @@ input:checked+.slider:before {
 .setting-hero {
     text-align: center;
     padding: clamp(30px, 4vw, 50px) 20px clamp(20px, 3vw, 30px) 20px;
-    background: transparent; /* Removed old heavy radial gradient */
+    background: transparent;
+    /* Removed old heavy radial gradient */
     border-bottom: 1px solid var(--border);
     margin-bottom: clamp(20px, 3vw, 30px);
 }
@@ -2137,12 +2474,13 @@ input:checked+.slider:before {
     font-size: clamp(24px, 3.5vw, 32px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     position: relative;
-    color: var(--accent); /* Default color, overridden by inline styles if needed */
+    color: var(--accent);
+    /* Default color, overridden by inline styles if needed */
 }
 
 /* Removed the old spinning dashed border for a cleaner look */
 .setting-hero-icon::after {
-    display: none; 
+    display: none;
 }
 
 .setting-hero h2 {
@@ -2168,7 +2506,8 @@ input:checked+.slider:before {
     border-radius: clamp(16px, 2vw, 24px);
     padding: clamp(20px, 3vw, 30px);
     margin-bottom: clamp(15px, 2vw, 25px);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02); /* Extremely soft shadow */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    /* Extremely soft shadow */
     transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 
@@ -2187,9 +2526,11 @@ input:checked+.slider:before {
 }
 
 /* --- 3. Crisp Inputs & Forms --- */
-.clean-input, .date-input {
+.clean-input,
+.date-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.02); /* Very subtle fill */
+    background: rgba(255, 255, 255, 0.02);
+    /* Very subtle fill */
     border: 1px solid var(--border);
     border-radius: clamp(10px, 1.5vw, 12px);
     padding: clamp(14px, 1.8vw, 16px);
@@ -2200,14 +2541,17 @@ input:checked+.slider:before {
     margin-top: 5px;
 }
 
-.clean-input:focus, .date-input:focus {
+.clean-input:focus,
+.date-input:focus {
     background: var(--bg-card);
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); /* Premium focus ring */
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    /* Premium focus ring */
     outline: none;
 }
 
-label.label, .form-group label {
+label.label,
+.form-group label {
     font-size: clamp(10px, 1.2vw, 12px);
     color: var(--text-gray);
     font-weight: 600;
@@ -2224,7 +2568,8 @@ label.label, .form-group label {
     border-radius: 3px;
     overflow: hidden;
     display: flex;
-    gap: 3px; /* Clean gap between segments */
+    gap: 3px;
+    /* Clean gap between segments */
     margin-top: 10px;
 }
 
@@ -2238,9 +2583,11 @@ label.label, .form-group label {
 .save-pro-btn {
     width: 100%;
     padding: clamp(14px, 2vw, 16px);
-    background: var(--text-white); /* High contrast */
+    background: var(--text-white);
+    /* High contrast */
     color: var(--bg-main);
-    border-radius: 999px !important; /* Perfect Pill Shape */
+    border-radius: 999px !important;
+    /* Perfect Pill Shape */
     font-weight: 600;
     font-family: 'Kantumruy Pro', 'Playfair Display', serif;
     font-size: clamp(13px, 1.6vw, 15px);
@@ -2276,6 +2623,7 @@ label.label, .form-group label {
     background: var(--accent);
     color: #000;
 }
+
 .primary-solid-btn:hover {
     box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
@@ -2288,7 +2636,8 @@ label.label, .form-group label {
     margin-bottom: clamp(15px, 2vw, 20px);
 }
 
-.select-card, .lang-card {
+.select-card,
+.lang-card {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border);
     border-radius: clamp(12px, 1.5vw, 16px);
@@ -2330,7 +2679,8 @@ label.label, .form-group label {
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border);
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05); /* ស្រមោលស្រាលនៅខាងក្នុង */
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+    /* ស្រមោលស្រាលនៅខាងក្នុង */
 }
 
 /* លេខបង្ហាញចំនួនសៀវភៅ */
@@ -2427,7 +2777,8 @@ label.label, .form-group label {
     display: inline-block;
     width: clamp(46px, 6vw, 52px);
     height: clamp(26px, 3.5vw, 30px);
-    flex-shrink: 0; /* ការពារកុំឱ្យរួមតូចពេលអេក្រង់ចង្អៀត */
+    flex-shrink: 0;
+    /* ការពារកុំឱ្យរួមតូចពេលអេក្រង់ចង្អៀត */
 }
 
 .switch input {
@@ -2439,8 +2790,12 @@ label.label, .form-group label {
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(255, 255, 255, 0.08); /* ពណ៌ប្រផេះស្រាលពេលបិទ */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.08);
+    /* ពណ៌ប្រផេះស្រាលពេលបិទ */
     border: 1px solid var(--border);
     transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     border-radius: 999px;
@@ -2460,14 +2815,17 @@ label.label, .form-group label {
 }
 
 /* ពេលបើក (Active State) */
-input:checked + .slider {
-    background-color: var(--accent); /* ពណ៌មាស */
+input:checked+.slider {
+    background-color: var(--accent);
+    /* ពណ៌មាស */
     border-color: var(--accent);
 }
 
-input:checked + .slider:before {
-    transform: translateX(clamp(20px, 3.2vw, 22px)); /* រំកិលទៅស្តាំ */
-    background-color: #111; /* ពណ៌ខ្មៅកាត់ជាមួយពណ៌មាស */
+input:checked+.slider:before {
+    transform: translateX(clamp(20px, 3.2vw, 22px));
+    /* រំកិលទៅស្តាំ */
+    background-color: #111;
+    /* ពណ៌ខ្មៅកាត់ជាមួយពណ៌មាស */
 }
 
 /* Specific fix for language card flex layout */
@@ -2477,13 +2835,15 @@ input:checked + .slider:before {
     text-align: left;
 }
 
-.select-card:hover, .lang-card:hover {
+.select-card:hover,
+.lang-card:hover {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.04);
     transform: translateY(-2px);
 }
 
-.select-card.active, .lang-card.active {
+.select-card.active,
+.lang-card.active {
     border-color: var(--accent);
     background: rgba(212, 175, 55, 0.05);
 }
@@ -2502,16 +2862,31 @@ input:checked + .slider:before {
     transition: color 0.2s ease;
 }
 
-.select-card.active i, .select-card.active span {
+.select-card.active i,
+.select-card.active span {
     color: var(--accent);
 }
 
 /* Color Overrides for Report Cards */
-.select-card.s-red.active { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
-.select-card.s-red.active i, .select-card.s-red.active span { color: #ef4444; }
+.select-card.s-red.active {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
 
-.select-card.s-blue.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
-.select-card.s-blue.active i, .select-card.s-blue.active span { color: #3b82f6; }
+.select-card.s-red.active i,
+.select-card.s-red.active span {
+    color: #ef4444;
+}
+
+.select-card.s-blue.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.select-card.s-blue.active i,
+.select-card.s-blue.active span {
+    color: #3b82f6;
+}
 
 /* --- 6. Contact Us Cards --- */
 .modern-card-all {
@@ -2599,10 +2974,16 @@ input:checked + .slider:before {
     /* Container shifts to allow sidebar */
     .app-frame {
         padding-bottom: 0;
+        padding-left: 80px; /* 👈 បន្ថែមកូដនេះ */
+    }
+
+    .app-frame.is-sub-page {
+        padding-left: 0 !important;
     }
 
     /* Transform bottom nav to Left Sidebar */
     .nav-bar {
+        position: fixed; /* 👈 បន្ថែមកូដនេះ */
         top: 0;
         left: 0;
         width: 80px;
@@ -2611,8 +2992,8 @@ input:checked + .slider:before {
         justify-content: center;
         border-top: none;
         border-right: 1px solid var(--border);
-        background: var(--bg-main);
-        /* solid back on desktop */
+        background: var(--bg-main); 
+        z-index: 100;
     }
 
     .nav-icon {
@@ -2732,6 +3113,10 @@ input:checked + .slider:before {
 
 /* Extended Sidebar for Large Screens */
 @media (min-width: 1024px) {
+    .app-frame {
+        padding-left: 240px; /* 👈 បន្ថែមកូដនេះ */
+    }
+
     .nav-bar {
         width: 240px;
         align-items: flex-start;
@@ -2763,5 +3148,9 @@ input:checked + .slider:before {
         font-family: 'Inter', sans-serif;
         font-weight: 600;
         font-size: 15px;
+    }
+    #sticky-search-header {
+        max-width: calc(100% - 240px); /* 👈 ប្តូរពី 80px ទៅ 240px */
+        left: 240px; /* 👈 ប្តូរពី 80px ទៅ 240px */
     }
 }

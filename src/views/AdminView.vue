@@ -273,8 +273,19 @@
                     Borrow</span>
                   <span v-else class="status-badge st-returned"><i class="fas fa-undo"></i> Return</span>
                 </td>
-                <td style="font-size:12px; color:var(--text-muted);">{{ r.start_date }} <i class="fas fa-arrow-right"
-                    style="font-size:10px; opacity:0.5;"></i> {{ r.end_date }}</td>
+                <td>
+                  <div style="font-size:12px; color:var(--text-muted);">
+                    <div>
+                      {{ formatRealDate(r.start_date) }} 
+                      <i class="fas fa-arrow-right" style="font-size:10px; margin:0 5px;"></i> 
+                      {{ formatRealDate(r.end_date) }}
+                    </div>
+                    
+                    <div style="color:var(--accent); font-weight:600; margin-top:4px;">
+                      <i class="far fa-calendar-alt"></i> {{ getRealtimeDuration(r.start_date, r.end_date, r.status) }}
+                    </div>
+                  </div>
+                </td>
                 <td style="display:flex; gap:8px; align-items:center;">
                   <button v-if="r.status === 'pending'" class="gold-btn"
                     style="padding:6px 12px; font-size:11px; background:#10b981; color:white;"
@@ -296,17 +307,20 @@
             <i class="fas fa-search"></i>
             <input type="text" v-model="reqSearch" placeholder="Search user/book..." />
           </div>
-          <div style="display:flex; gap:10px;">
-            <button class="gold-btn" @click="reqFilter = 'pending'"
-              style="padding:12px; min-width:auto;">Pending</button>
-            <button class="gold-btn" @click="reqFilter = 'all'"
-              style="background:var(--input-bg); color:var(--text-main); padding:12px; min-width:auto; border:1px solid var(--border);">All</button>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button v-if="selectedReqIds.length > 0" class="gold-btn" @click="bulkDeleteRequests" style="background:#ef4444; color:white; border:none; padding:12px; min-width:auto;">
+              <i class="fas fa-trash"></i> Delete Selected ({{ selectedReqIds.length }})
+            </button>
+
+            <button class="gold-btn" @click="reqFilter = 'pending'" style="padding:12px; min-width:auto;">Pending</button>
+            <button class="gold-btn" @click="reqFilter = 'all'" style="background:var(--input-bg); color:var(--text-main); padding:12px; min-width:auto; border:1px solid var(--border);">All</button>
           </div>
         </div>
         <div class="glass-table-wrapper">
           <table class="modern-table">
             <thead>
               <tr>
+                <th style="width:40px;"><input type="checkbox" class="checkbox-custom" v-model="selectAllReqs" @change="toggleSelectAllReqs" /></th>
                 <th>User</th>
                 <th>Book Title</th>
                 <th>Duration</th>
@@ -316,10 +330,11 @@
             </thead>
             <tbody>
               <tr v-if="paginatedRequests.length === 0">
-                <td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">No requests found.
-                </td>
+                <td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">No requests found.</td>
               </tr>
               <tr v-for="r in paginatedRequests" :key="r.id">
+                <td><input type="checkbox" class="checkbox-custom" :value="r.id" v-model="selectedReqIds" /></td>
+                
                 <td>
                   <div style="font-weight:600; font-size:13px; color:var(--text-main);">{{ r.user_email }}</div>
                 </td>
@@ -327,8 +342,17 @@
                   <div style="font-weight:600; color:var(--accent);">{{ r.book_title }}</div>
                 </td>
                 <td>
-                  <div style="font-size:12px; color:var(--text-muted);">{{ r.start_date }} <i class="fas fa-arrow-right"
-                      style="font-size:10px; margin:0 5px;"></i> {{ r.end_date }}</div>
+                  <div style="font-size:12px; color:var(--text-muted);">
+                    <div>
+                      {{ r.start_date?.split(' ')[0]?.split('T')[0] }} 
+                      <i class="fas fa-arrow-right" style="font-size:10px; margin:0 5px;"></i> 
+                      {{ r.end_date?.split(' ')[0]?.split('T')[0] }}
+                    </div>
+                    
+                    <div style="color:var(--accent); font-weight:600; margin-top:4px;">
+                      <i class="far fa-calendar-alt"></i> {{ getRealtimeDuration(r.start_date, r.end_date, r.status) }}
+                    </div>
+                  </div>
                 </td>
                 <td><span :class="['status-badge', reqBadge(r.status)]">{{ r.status }}</span></td>
                 <td>
@@ -383,14 +407,16 @@
                 <td style="text-transform:uppercase; font-size:11px; color:var(--text-muted);">{{ group.latestLog.role
                   }}</td>
                 <td>
-                  <div style="color:var(--text-main);">{{ group.latestLog.login_time?.split(' ')[0] }}</div>
-                  <div style="font-size:10px; color:var(--text-muted);">{{ group.latestLog.login_time?.split(' ')[1] }}
+                  <div style="color:var(--text-main); font-weight:600;">
+                    {{ formatRealDate(group.latestLog.login_time) }}
+                  </div>
+                  <div style="font-size:11px; color:var(--accent); font-weight:600; margin-top:2px;">
+                    <i class="far fa-clock"></i> {{ formatRealTime(group.latestLog.login_time) }}
                   </div>
                 </td>
                 <td>
-                  <span v-if="group.priorityStatus === 'active'" style="color:#10b981; font-weight:bold;">Online ({{
-                    durationStr(group.latestLog) }})</span>
-                  <span v-else style="color:var(--text-muted);">{{ durationStr(group.latestLog) }}</span>
+                  <span v-if="group.priorityStatus === 'active'" style="color:#10b981; font-weight:bold;">Online ({{ durationStr(group.latestLog, group.priorityStatus) }})</span>
+                  <span v-else style="color:var(--text-muted);">{{ durationStr(group.latestLog, group.priorityStatus) }}</span>
                 </td>
                 <td>
                   <span v-if="group.priorityStatus === 'active'" class="status-badge st-approved">Online</span>
@@ -613,13 +639,19 @@ let pieChartInstance = null
 let heartbeatInterval = null
 let notifInterval = null
 
+let timeInterval = null
+const currentTime = ref(new Date().getTime())
+
+const selectedReqIds = ref([])
+const selectAllReqs = ref(false)
+
 // ===========================
 // COMPUTED
 // ===========================
 const navItems = [
   { view: 'overview', label: 'Overview', icon: 'fas fa-th-large' },
   { view: 'books', label: 'Inventory', icon: 'fas fa-book' },
-  { view: 'users', label: 'Users & Roles', icon: 'fas fa-users' },
+  { view: 'users', label: 'Users & Roles', icon: 'fas fa-users ic-user-admin' },
   { view: 'approvals', label: 'Approvals', icon: 'fas fa-check-double' },
   { view: 'requests', label: 'Borrow Requests', icon: 'fas fa-hand-holding-heart' },
   { view: 'activity', label: 'Activity Logs', icon: 'fas fa-history' },
@@ -662,14 +694,31 @@ const activityGroups = computed(() => {
   const q = actSearch.value.toLowerCase()
   const userMap = {}
   const sorted = [...activities.value].sort((a, b) => b.id - a.id)
+  
   sorted.forEach(act => {
     if (q && !act.email.toLowerCase().includes(q)) return
+
+    let currentStatus = act.status
+    // គន្លឹះសំខាន់៖ ទម្លាក់ទៅជា Offline ដោយស្វ័យប្រវត្តិ បើអសកម្មលើសពី ៩០ វិនាទី
+    if (currentStatus === 'active' && act.last_active) {
+       const lastActiveTime = getLocalTime(act.last_active).getTime()
+       if (currentTime.value - lastActiveTime > 90000) { 
+         currentStatus = 'offline' 
+       }
+    }
+
     if (!userMap[act.email]) {
-      userMap[act.email] = { latestLog: act, count: 1, priorityStatus: act.status, targetId: act.id }
+      userMap[act.email] = { latestLog: act, count: 1, priorityStatus: currentStatus, targetId: act.id }
     } else {
       userMap[act.email].count++
-      if (act.status === 'active') { userMap[act.email].priorityStatus = 'active'; userMap[act.email].targetId = act.id }
-      else if (userMap[act.email].priorityStatus !== 'active' && act.status === 'kicked') { userMap[act.email].priorityStatus = 'kicked'; userMap[act.email].targetId = act.id }
+      if (currentStatus === 'active') { 
+         userMap[act.email].priorityStatus = 'active'
+         userMap[act.email].targetId = act.id 
+      }
+      else if (userMap[act.email].priorityStatus !== 'active' && currentStatus === 'kicked') { 
+         userMap[act.email].priorityStatus = 'kicked'
+         userMap[act.email].targetId = act.id 
+      }
     }
   })
   return userMap
@@ -718,11 +767,53 @@ function reqBadge(status) {
   return { pending: 'st-pending', approved: 'st-approved', rejected: 'st-rejected', returned: 'st-returned' }[status] || 'st-pending'
 }
 
-function durationStr(act) {
-  const start = new Date(act.login_time)
-  const end = act.logout_time ? new Date(act.logout_time) : new Date()
-  const diffMins = Math.floor((end - start) / 60000)
-  return `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`
+// ១. អនុគមន៍អានម៉ោងធម្មតា (ដកការបូកថែម ៧ ម៉ោង ឬ Timezone ចេញ)
+function getLocalTime(dateStr) {
+  if (!dateStr) return new Date()
+  let d = new Date(dateStr)
+  
+  // ការពារ Error ពេល Browser ខ្លះមិនស្គាល់ទម្រង់ថ្ងៃខែ
+  if (isNaN(d.getTime()) && typeof dateStr === 'string') {
+    d = new Date(dateStr.replace(/-/g, '/').replace('T', ' ').split('.')[0])
+  }
+  
+  // លែងមានកូដបូក ៧ ម៉ោងទៀតហើយ គឺយកម៉ោងដើមសុទ្ធសាធ
+  return d
+}
+
+// ២. ទាញយក ថ្ងៃខែឆ្នាំ
+function formatRealDate(dateStr) {
+  if (!dateStr) return '-'
+  return getLocalTime(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// ៣. ទាញយក ម៉ោង
+function formatRealTime(dateStr) {
+  if (!dateStr) return '-'
+  return getLocalTime(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+}
+
+// ៤. គណនារយៈពេល (ប្រើម៉ោងដើម)
+function durationStr(act, status) {
+  // បើកំពុង Online លោត Just now
+  if (status === 'active') return 'Just now'
+  
+  // បើ Offline យកម៉ោងចុងក្រោយមកដកជាមួយម៉ោងបច្ចុប្បន្ន
+  const targetStr = act.logout_time || act.last_active || act.login_time
+  if (!targetStr) return '0m'
+  
+  const targetTime = getLocalTime(targetStr).getTime()
+  const diffMins = Math.floor((currentTime.value - targetTime) / 60000)
+  
+  if (diffMins <= 0) return '1m' // លោតយ៉ាងហោចណាស់ 1m បើទើបបិទភ្លាមៗ
+  
+  const h = Math.floor(diffMins / 60)
+  const m = diffMins % 60
+  const d = Math.floor(h / 24)
+  
+  if (d > 0) return `${d}d ${h % 24}h`
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
 }
 
 // Custom Confirm
@@ -764,21 +855,70 @@ async function fetchNotifications() {
   } catch (e) { console.error(e) }
 }
 
-// Approvals
+// Approvals - ចុចអនុម័ត 
 async function triggerApprove(id, start, end) {
   const ok = await showCustomConfirm('Approve Request?', 'User will be allowed to take the book.', 'Yes, Approve', 'success')
-  if (ok) { await apiUpdate(id, 'approved', start, end); await fetchData() }
+  if (ok) { 
+    isLoading.value = true // បើក Loading
+    try {
+      const data = await apiUpdate(id, 'approved', start, end)
+      if (data.success) {
+        showToast('Request Approved Successfully!')
+        await fetchData()
+      } else {
+        showToast(data.message || 'Failed to approve', 'error')
+      }
+    } catch (e) {
+      showToast('Connection error. Please try again.', 'error')
+    } finally {
+      isLoading.value = false // បិទ Loading វិញ
+    }
+  }
 }
+
+// ទទួលសៀវភៅត្រឡប់មកវិញ
 async function triggerReturn(id) {
   const ok = await showCustomConfirm('Confirm Return?', 'This will mark the book as back in stock.', 'Confirm Return', 'warn')
-  if (ok) { await apiUpdate(id, 'returned'); await fetchData() }
+  if (ok) { 
+    isLoading.value = true // បើក Loading
+    try {
+      const data = await apiUpdate(id, 'returned')
+      if (data.success) {
+        showToast('Book Return Confirmed!')
+        await fetchData()
+      } else {
+        showToast(data.message || 'Failed to return', 'error')
+      }
+    } catch (e) {
+      showToast('Connection error', 'error')
+    } finally {
+      isLoading.value = false // បិទ Loading វិញ
+    }
+  }
 }
+
+// បដិសេធសំណើ
 async function triggerReject(id) {
   const ok = await showCustomConfirm('Reject Request?', 'User will be notified.', 'Yes, Reject', 'danger')
-  if (ok) { await apiUpdate(id, 'rejected'); await fetchData() }
+  if (ok) { 
+    isLoading.value = true // បើក Loading
+    try {
+      const data = await apiUpdate(id, 'rejected')
+      if (data.success) {
+        showToast('Request Rejected!')
+        await fetchData()
+      } else {
+        showToast(data.message || 'Failed to reject', 'error')
+      }
+    } catch (e) {
+      showToast('Connection error', 'error')
+    } finally {
+      isLoading.value = false // បិទ Loading វិញ
+    }
+  }
 }
 async function apiUpdate(id, status, start = '', end = '') {
-  await requestsApi.updateRequest({ id, status, start_date: start, end_date: end })
+  return await requestsApi.updateRequest({ id, status, start_date: start, end_date: end })
 }
 
 // Bulk
@@ -786,32 +926,48 @@ function toggleSelectAll() {
   if (selectAll.value) selectedRequestIds.value = pendingTasks.value.map(r => r.id)
   else selectedRequestIds.value = []
 }
+// Bulk Actions
 async function bulkApprove() {
   const count = selectedRequestIds.value.length
   if (!count) return
   const ok = await showCustomConfirm(`Approve ${count} Requests?`, 'These users will be allowed to borrow books.', 'Yes, Approve All', 'success')
   if (ok) {
-    for (const id of selectedRequestIds.value) {
-      const r = requests.value.find(req => req.id === id)
-      if (r) {
-        if (r.status === 'pending') await apiUpdate(id, 'approved', r.start_date, r.end_date)
-        else if (r.status === 'return_pending') await apiUpdate(id, 'returned')
+    isLoading.value = true // បើក Loading
+    try {
+      for (const id of selectedRequestIds.value) {
+        const r = requests.value.find(req => req.id === id)
+        if (r) {
+          if (r.status === 'pending') await apiUpdate(id, 'approved', r.start_date, r.end_date)
+          else if (r.status === 'return_pending') await apiUpdate(id, 'returned')
+        }
       }
+      showToast(`${count} requests approved!`)
+      selectedRequestIds.value = []; selectAll.value = false
+      await fetchData()
+    } catch (e) {
+      showToast('Error processing some requests.', 'error')
+    } finally {
+      isLoading.value = false // បិទ Loading វិញ
     }
-    showToast(`${count} requests approved!`)
-    selectedRequestIds.value = []; selectAll.value = false
-    await fetchData()
   }
 }
+
 async function bulkReject() {
   const count = selectedRequestIds.value.length
   if (!count) return
   const ok = await showCustomConfirm(`Reject ${count} Requests?`, 'This cannot be undone.', 'Reject All', 'danger')
   if (ok) {
-    for (const id of selectedRequestIds.value) await apiUpdate(id, 'rejected')
-    showToast(`${count} requests rejected.`)
-    selectedRequestIds.value = []; selectAll.value = false
-    await fetchData()
+    isLoading.value = true // បើក Loading
+    try {
+      for (const id of selectedRequestIds.value) await apiUpdate(id, 'rejected')
+      showToast(`${count} requests rejected.`)
+      selectedRequestIds.value = []; selectAll.value = false
+      await fetchData()
+    } catch (e) {
+      showToast('Error processing some requests.', 'error')
+    } finally {
+      isLoading.value = false // បិទ Loading វិញ
+    }
   }
 }
 
@@ -821,10 +977,13 @@ function openQuickModal(index) {
   showQuickModal.value = true
   showNotifDropdown.value = false
 }
+// Notifications quick modal
 async function processQuickAction(status) {
   if (!quickModalData.value) return
   let finalStatus = status
   if (quickModalData.value.status === 'return_pending' && status === 'approved') finalStatus = 'returned'
+  
+  isLoading.value = true // បើក Loading
   try {
     const data = await requestsApi.updateRequest({ id: quickModalData.value.id, status: finalStatus, start_date: quickModalData.value.start_date, end_date: quickModalData.value.end_date })
     if (data.success) {
@@ -832,8 +991,14 @@ async function processQuickAction(status) {
       await fetchNotifications()
       await fetchData()
       showToast(`Request ${finalStatus === 'returned' ? 'Return Confirmed' : finalStatus}!`)
+    } else {
+      showToast(data.message || 'Failed to process request', 'error')
     }
-  } catch (e) { console.error(e) }
+  } catch (e) { 
+    showToast('Connection error', 'error')
+  } finally {
+    isLoading.value = false // បិទ Loading វិញ
+  }
 }
 
 // Books CRUD
@@ -915,13 +1080,63 @@ async function saveRequest() {
     else alert(data.message)
   } catch (e) { alert('Server Error') }
 }
+// មុខងារ Select All សម្រាប់ Borrow Requests
+function toggleSelectAllReqs() {
+  if (selectAllReqs.value) {
+    selectedReqIds.value = paginatedRequests.value.map(r => r.id)
+  } else {
+    selectedReqIds.value = []
+  }
+}
+
+// មុខងារលុបសំណើតែមួយ (Single Delete)
 async function deleteRequest(id) {
-  if (!confirm('Delete this record? This cannot be undone.')) return
+  const ok = await showCustomConfirm('Delete Request?', 'Are you sure you want to delete this record?', 'Yes, Delete', 'danger')
+  if (!ok) return
+  
+  isLoading.value = true
   try {
     const data = await requestsApi.deleteRequest(id)
-    if (data.success) { await fetchData(); await fetchNotifications() }
-    else alert('Could not delete.')
-  } catch (e) { console.error(e) }
+    if (data.success) {
+      // លោត Alert ជោគជ័យ
+      showToast('Borrow request deleted successfully!', 'success')
+      await fetchData()
+      await fetchNotifications()
+    } else {
+      showToast(data.message || 'Could not delete.', 'error')
+    }
+  } catch (e) {
+    showToast('Connection error', 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// មុខងារលុបសំណើច្រើនក្នុងពេលតែមួយ (Bulk Delete)
+async function bulkDeleteRequests() {
+  const count = selectedReqIds.value.length
+  if (!count) return
+  
+  const ok = await showCustomConfirm(`Delete ${count} Requests?`, 'This action cannot be undone.', 'Delete All', 'danger')
+  if (!ok) return
+  
+  isLoading.value = true
+  try {
+    for (const id of selectedReqIds.value) {
+      await requestsApi.deleteRequest(id)
+    }
+    // លោត Alert ជោគជ័យបញ្ជាក់ចំនួនដែលបានលុប
+    showToast(`${count} borrow requests deleted successfully!`, 'success')
+    
+    selectedReqIds.value = []
+    selectAllReqs.value = false
+    await fetchData()
+    await fetchNotifications()
+  } catch (e) {
+    showToast('Error processing deletion.', 'error')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // Activity
@@ -936,11 +1151,26 @@ async function unkickUser(id) {
   if (data.success) { await fetchData(); showToast('User unkicked. Session restored.') }
   else alert(data.message)
 }
+// មុខងារលុប Activity Log
 async function deleteActivity(id) {
-  if (!confirm('Delete this log?')) return
-  const data = await adminApi.deleteActivity(id)
-  if (data.success) { await fetchData(); showToast('Activity log deleted') }
-  else alert(data.message)
+  const ok = await showCustomConfirm('Delete Log?', 'Are you sure you want to delete this activity log?', 'Yes, Delete', 'danger')
+  if (!ok) return
+  
+  isLoading.value = true 
+  try {
+    const data = await adminApi.deleteActivity(id)
+    if (data.success) {
+      // លោត Alert ជោគជ័យ
+      showToast('Activity log deleted successfully!', 'success')
+      await fetchData() 
+    } else {
+      showToast(data.message || 'Failed to delete activity log', 'error')
+    }
+  } catch (e) {
+    showToast('Connection error. Please try again.', 'error')
+  } finally {
+    isLoading.value = false 
+  }
 }
 
 // Charts
@@ -1003,6 +1233,39 @@ async function sendPulse() {
   try { await authApi.heartbeat(u.email, sid, 'admin') } catch (e) { }
 }
 
+// អនុគមន៍សម្រាប់គណនារយៈពេលសល់ជាក់ស្តែង (បង្ហាញចំនួនថ្ងៃសល់ និង ថ្ងៃហួសកំណត់)
+function getRealtimeDuration(startDate, endDate, status) {
+  if (status === 'returned') return 'បានសងរួច'
+  if (status === 'rejected') return 'បានបដិសេធ'
+
+  const end = new Date(endDate).getTime()
+  const start = new Date(startDate).getTime()
+  const now = currentTime.value
+
+  // បើមិនទាន់ដល់ថ្ងៃចាប់ផ្តើម
+  if (now < start) return 'មិនទាន់ដល់ថ្ងៃ'
+
+  const diff = end - now
+
+  // ករណីហួសកំណត់ (diff ក្រោម ០)
+  if (diff < 0) {
+    // គណនាចំនួនថ្ងៃដែលហួស
+    const overdueDays = Math.floor(Math.abs(diff) / (1000 * 60 * 60 * 24))
+    if (overdueDays > 0) {
+      return `ហួសកំណត់ ${overdueDays} ថ្ងៃ`
+    }
+    return `ហួសកំណត់ថ្ងៃនេះ` // ករណីហួសម៉ោង តែស្ថិតក្នុងថ្ងៃដដែល
+  }
+
+  // ករណីមិនទាន់ហួសកំណត់ (សល់ថ្ងៃ)
+  const remainingDays = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (remainingDays > 0) {
+    return `សល់ ${remainingDays} ថ្ងៃ`
+  }
+  
+  return `ថ្ងៃនេះជាថ្ងៃចុងក្រោយ`
+}
+
 // ===========================
 // LIFECYCLE
 // ===========================
@@ -1024,6 +1287,9 @@ onMounted(async () => {
 
   notifInterval = setInterval(fetchNotifications, 5000)
   heartbeatInterval = setInterval(sendPulse, 30000)
+  timeInterval = setInterval(() => {
+    currentTime.value = new Date().getTime()
+  }, 60000)
   sendPulse()
 
   // Click outside to close dropdown
@@ -1038,6 +1304,7 @@ onUnmounted(() => {
   clearInterval(heartbeatInterval)
   if (mainChartInstance) mainChartInstance.destroy()
   if (pieChartInstance) pieChartInstance.destroy()
+  if (timeInterval) clearInterval(timeInterval)
 })
 </script>
 

@@ -822,6 +822,10 @@ body {
     flex: 1;
 }
 
+.ic-user-admin {
+    color: unset;
+}
+
 .input-group label {
     display: block;
     font-size: 12px;
@@ -863,7 +867,7 @@ body {
 }
 
 .cancel-btn {
-    background: transparent;
+    background: var(--bg-btn-cancel);
     color: var(--text-muted);
     padding: 12px 20px;
     border: none;
@@ -1216,43 +1220,74 @@ body {
     color: var(--text-muted);
 }
 
-/* --- GLOBAL LOADER STYLES --- */
+/* ==========================================================
+   MODERN GLOBAL LOADER (Glassmorphism & Glow)
+   ========================================================== */
+
+/* ១. ផ្ទៃខាងក្រោយពណ៌ស្រអាប់ និងព្រាល (Glass Blur Effect) */
 .global-loader {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(15, 23, 42, 0.8);
-    /* ពណ៌ព្រាលៗពីក្រោយ */
-    z-index: 99999;
-    /* ខ្ពស់ជាងគេបំផុតដើម្បីបាំងអ្វីៗទាំងអស់ */
+    inset: 0; /* ស្មើនឹង top: 0; left: 0; right: 0; bottom: 0; */
+    background: rgba(15, 23, 42, 0.65); /* ពណ៌ខ្មៅថ្លា */
+    backdrop-filter: blur(12px); /* ធ្វើឱ្យផ្ទៃខាងក្រោយព្រាលស្អាត (Apple Style) */
+    -webkit-backdrop-filter: blur(12px);
     display: flex;
-    justify-content: center;
     align-items: center;
-    backdrop-filter: blur(5px);
+    justify-content: center;
+    z-index: 9999; /* ឱ្យវានៅលើគេបង្អស់ជានិច្ច */
+    opacity: 1;
+    animation: fadeInLoader 0.3s ease-out forwards;
 }
 
-.global-loader.hidden {
-    display: none;
-}
-
+/* ២. រង្វង់ Loading វិល (Modern Glowing Spinner) */
 .global-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid rgba(212, 175, 55, 0.2);
-    border-top: 5px solid #D4AF37;
-    /* ពណ៌មាស */
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    /* ខ្សែជុំវិញពណ៌ស្រាល (Track) */
+    border: 4px solid rgba(212, 175, 55, 0.15); 
+    /* ខ្សែវិលពណ៌មាស (Accent Color) */
+    border-top-color: var(--accent); 
+    border-right-color: var(--accent);
+    /* ពន្លឺ Glow ស្រាលៗធ្វើឱ្យមើលទៅ Premium */
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); 
+    /* ចលនាវិល Smooth និងរលូន */
+    animation: modernSpin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@keyframes spin {
+/* ៣. បង្កើតចលនាវិល (Spin) */
+@keyframes modernSpin {
     0% {
         transform: rotate(0deg);
     }
-
     100% {
         transform: rotate(360deg);
+    }
+}
+
+/* ៤. បង្កើតចលនាលេចចេញមកទន់ភ្លន់ (Fade In) */
+@keyframes fadeInLoader {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(12px);
+    }
+}
+
+/* ==========================================================
+   DESKTOP LAYOUT (Dashboard) - ការពារមិនឱ្យ Sidebar បាំង Content
+   ========================================================== */
+@media (min-width: 1024px) {
+    /* ឱ្យ Sidebar (nav-bar) នៅស្ងៀមមួយកន្លែងផ្នែកខាងឆ្វេង */
+    .nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px; /* ទំហំ Sidebar របស់ Dashboard */
+        height: 100vh;
+        z-index: 100;
     }
 }

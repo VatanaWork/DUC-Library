@@ -6,7 +6,10 @@
 import { onMounted } from 'vue'
 
 onMounted(() => {
-  const theme = localStorage.getItem('theme') || 'dark'
+  // កូដចាស់: const theme = localStorage.getItem('theme') || 'dark'
+  // ប្តូរទៅជា 'light' វិញ៖
+  const theme = localStorage.getItem('theme') || 'light'
+  
   if (theme === 'light') {
     document.body.classList.add('light-mode')
   } else {

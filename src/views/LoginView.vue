@@ -1,11 +1,9 @@
 <template>
   <div>
-    <!-- Global Loader -->
     <div v-if="isLoading" class="global-loader">
       <div class="global-spinner"></div>
     </div>
 
-    <!-- Toast Container -->
     <div id="toast-container">
       <div v-for="toast in toasts" :key="toast.id" :class="['modern-toast', toast.type]">
         <i :class="['fas', toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle', 'toast-icon']"></i>
@@ -16,75 +14,268 @@
     <div class="overlay"></div>
 
     <div class="content-container">
-      <!-- Header -->
       <div class="header">
-        <i class="fas fa-feather-alt"></i>
+        <img class="logo-login" src="../../public/img/DUC.png" alt="">
         <h1 v-html="pageTitle"></h1>
         <p>{{ pageDesc }}</p>
       </div>
 
-      <!-- Form -->
-      <form @submit.prevent="handleAuth">
-        <!-- Name Field (Register only) -->
-        <div v-if="!isLogin" class="input-box fade-in">
-          <input type="text" v-model="form.name" placeholder="Your Name" />
-          <i class="far fa-user"></i>
+      <div v-if="isForgotPassword" class="fade-in">
+        <div class="forgot-header-text">
+          <h2 style="color: white; margin-bottom: 10px;">
+            {{ forgotStep === 1 ? t('forgot_title_1', 'Search Account') : forgotStep === 2 ? t('forgot_title_2',
+              'Confirm code') : t('forgot_title_3', 'New Password') }}
+          </h2>
+          <p style="color: #94A3B8; font-size: 14px; margin-bottom: 25px;">
+            {{ forgotStep === 1 ? t('forgot_desc_1', 'Please enter your email to receive the OTP code.') : forgotStep
+              === 2 ?
+              `${t('forgot_desc_2', 'Code sent to')} ${forgotForm.email}` : t('forgot_desc_3', 'Enter New Password') }}
+          </p>
         </div>
 
-        <!-- Email -->
-        <div class="input-box">
-          <input type="email" v-model="form.email" placeholder="Email Address" required />
-          <i class="far fa-envelope"></i>
+        <form @submit.prevent="handleForgotSubmit">
+          <div v-if="forgotStep === 1" class="input-box">
+            <input class="input-login" type="email" v-model="forgotForm.email" :placeholder="t('login_ph_email', 'Email Address')"
+              required />
+            <i class="far fa-envelope"></i>
+          </div>
+
+          <div v-if="forgotStep === 2" class="input-box">
+            <input class="input-login" type="text" v-model="forgotForm.otp" :placeholder="t('forgot_ph_otp', '6-digit code')" required
+              style="letter-spacing: 5px; font-weight: bold; text-align: center; padding-left: 20px;" maxlength="6" />
+            <i class="fas fa-shield-alt"></i>
+          </div>
+
+          <div v-if="forgotStep === 3" class="input-box">
+            <input class="input-login" :type="showNewPassword ? 'text' : 'password'" v-model="forgotForm.newPassword"
+              :placeholder="t('forgot_ph_new_pass', 'New Password')" required />
+            <i class="fas fa-lock"></i>
+            <i :class="['eye-icon fas', showNewPassword ? 'fa-eye-slash' : 'fa-eye']"
+              @click="showNewPassword = !showNewPassword"></i>
+          </div>
+
+          <button type="submit" class="login-btn" :disabled="isLoading">
+            {{ isLoading ? t('login_loading', 'Progressing...') : (forgotStep === 1 ? t('forgot_btn_1', 'Send Code') :
+              forgotStep === 2 ? t('forgot_btn_2', 'Verify') :
+                t('forgot_btn_3', 'Change Password')) }}
+          </button>
+        </form>
+
+        <div class="switch-text" style="margin-top: 20px;">
+          <span @click="backToLogin" style="cursor: pointer;"><i class="fas fa-arrow-left"></i> {{ t('forgot_back',
+            'Back to Login') }}</span>
+        </div>
+      </div>
+
+      <div v-else class="fade-in">
+        <form @submit.prevent="handleAuth">
+          <div v-if="!isLogin" class="input-box fade-in">
+            <input class="input-login" type="text" v-model="form.name" :placeholder="t('login_ph_name', 'Your Name')" />
+            <i class="far fa-user"></i>
+          </div>
+          <div class="input-box">
+            <input class="input-login" type="email" v-model="form.email" :placeholder="t('login_ph_email', 'Email Address')" required />
+            <i class="far fa-envelope"></i>
+          </div>
+          <div class="input-box">
+            <input class="input-login" :type="showPassword ? 'text' : 'password'" v-model="form.password"
+              :placeholder="t('login_ph_pass', 'Password')" required />
+            <i class="fas fa-key"></i>
+            <i :class="['eye-icon fas', showPassword ? 'fa-eye-slash' : 'fa-eye']"
+              @click="showPassword = !showPassword"></i>
+          </div>
+
+          <div v-if="isLogin" style="text-align: right; margin-bottom: 20px;">
+            <span @click="toggleForgotPassword"
+              style="color: #D4AF37; font-size: 13px; cursor: pointer; text-decoration: underline;">{{
+                t('login_forgot_link', 'Forgot Password?') }}</span>
+          </div>
+
+          <button type="submit" class="login-btn" :disabled="isLoading">
+            {{ isLoading ? t('login_loading', 'Progressing...') : (isLogin ? t('login_btn_in', 'Log In') :
+              t('login_btn_up', 'Register')) }}
+          </button>
+        </form>
+
+        <div class="switch-text">
+          <span>{{ isLogin ? t('login_switch_new', 'New here?') : t('login_switch_already', 'Already a member?')
+            }}</span>
+          <span class="link-register-form" @click="toggleMode">{{ isLogin ? t('login_switch_create', 'Create an account') : t('login_switch_login', 'Log In') }}</span>
         </div>
 
-        <!-- Password -->
-        <div class="input-box">
-          <input type="password" v-model="form.password" placeholder="Password" required />
-          <i class="fas fa-key"></i>
+        <div class="divider"><span>{{ t('login_or', 'Or With') }}</span></div>
+        <div class="google-btn-wrapper">
+          <div id="google-button"></div>
         </div>
-
-        <button type="submit" class="login-btn" :disabled="isLoading">
-          {{ isLoading ? 'កំពុងដំណើរការ...' : (isLogin ? 'Log In' : 'Register') }}
-        </button>
-      </form>
-
-      <!-- Toggle -->
-      <div class="switch-text">
-        <span>{{ isLogin ? 'New here?' : 'Already a member?' }}</span>
-        <span @click="toggleMode">{{ isLogin ? 'Create an Account' : 'Log In' }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '../composables/useApi.js'
+// ១. ទាញយកមុខងារបកប្រែ
+import { useTranslation } from '../composables/useTranslation.js'
 
 const router = useRouter()
+// ២. ប្រើប្រាស់មុខងារបកប្រែ (វានឹងទាញយកភាសាពី localStorage ដោយស្វ័យប្រវត្តិ)
+const { t, loadTranslations, currentLang } = useTranslation()
 
 // ===== STATE =====
 const isLogin = ref(true)
 const isLoading = ref(false)
 const toasts = ref([])
+const showPassword = ref(false)
 
 const form = ref({ name: '', email: '', password: '' })
 
+// ===== សម្រាប់ Forgot Password =====
+const isForgotPassword = ref(false)
+const forgotStep = ref(1) // 1: Email, 2: OTP, 3: New Pass
+const forgotForm = ref({ email: '', otp: '', newPassword: '' })
+const showNewPassword = ref(false)
+
 // ===== COMPUTED =====
-const pageTitle = computed(() =>
-  isLogin.value ? 'Explore<br>Knowledge' : 'Begin Your<br>Journey'
-)
-const pageDesc = computed(() =>
-  isLogin.value
-    ? 'Sign in to access your digital library.'
-    : 'Join the community of readers.'
-)
+// បន្ថែម currentLang.value ដើម្បីឲ្យវា Refresh ពេលទាញទិន្នន័យបាន
+const pageTitle = computed(() => {
+  currentLang.value
+  return t('login_title', 'DUC Library')
+})
+
+const pageDesc = computed(() => {
+  currentLang.value
+  return isLogin.value
+    ? t('login_desc_in', 'Sign in to access digital library.')
+    : t('login_desc_up', 'Join the community of readers.')
+})
+
+// មុខងារបំប្លែងទិន្នន័យ (Decode) ពី Google
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''))
+    return JSON.parse(jsonPayload)
+  } catch (e) { return null }
+}
+
+async function handleGoogleCallback(response) {
+  const payload = parseJwt(response.credential)
+  if (!payload) {
+    showToast('Fail to Catching Data from Google', 'error')
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const data = await authApi.googleLogin(payload.name, payload.email, payload.picture)
+
+    if (data.success) {
+      sessionStorage.setItem('currentUser', JSON.stringify(data.user))
+      if (data.session_id) sessionStorage.setItem('session_id', data.session_id)
+
+      sessionStorage.setItem('flashMessage', 'Login Success!')
+      router.push(data.user.role === 'admin' ? '/admin' : '/dashboard')
+    } else {
+      showToast(data.message, 'error')
+    }
+  } catch (e) {
+    showToast('Fail connecting to Server', 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function renderGoogleButton() {
+  const checkGoogle = setInterval(() => {
+    if (window.google) {
+      clearInterval(checkGoogle)
+      const googleBtnDiv = document.getElementById('google-button')
+      if (googleBtnDiv) {
+        window.google.accounts.id.initialize({
+          client_id: '824715499710-po98qc793p53qckdnp3l9d0cl5mtmk4e.apps.googleusercontent.com',
+          callback: handleGoogleCallback
+        })
+        window.google.accounts.id.renderButton(
+          googleBtnDiv,
+          { theme: 'outline', size: 'large', shape: 'pill', width: '100%', text: 'continue_with' }
+        )
+      }
+    }
+  }, 100)
+}
+
+async function backToLogin() {
+  isForgotPassword.value = false
+  form.value.password = ''
+  await nextTick()
+  renderGoogleButton()
+}
+
+onMounted(async () => {
+  // ៣. អានឯកសារ translations.json និងកំណត់ភាសាពី localStorage
+  await loadTranslations()
+
+  const flashMsg = sessionStorage.getItem('flashMessage')
+  if (flashMsg) {
+    showToast(flashMsg, 'success')
+    sessionStorage.removeItem('flashMessage')
+  }
+
+  renderGoogleButton()
+})
 
 // ===== METHODS =====
 function toggleMode() {
   isLogin.value = !isLogin.value
+  isForgotPassword.value = false
   form.value = { name: '', email: '', password: '' }
+  showPassword.value = false
+}
+
+function toggleForgotPassword() {
+  isForgotPassword.value = true
+  forgotStep.value = 1
+  forgotForm.value = { email: form.value.email, otp: '', newPassword: '' }
+}
+
+async function handleForgotSubmit() {
+  isLoading.value = true
+  try {
+    if (forgotStep.value === 1) {
+      if (!forgotForm.value.email) return showToast('Please Enter your email', 'error')
+      const data = await authApi.forgotPassword(forgotForm.value.email)
+      if (data.success) {
+        showToast(data.message, 'success')
+        forgotStep.value = 2
+      } else showToast(data.message, 'error')
+    }
+    else if (forgotStep.value === 2) {
+      if (!forgotForm.value.otp) return showToast('Please enter OTP', 'error')
+      const data = await authApi.verifyOTP(forgotForm.value.email, forgotForm.value.otp)
+      if (data.success) {
+        showToast(data.message, 'success')
+        forgotStep.value = 3
+      } else showToast(data.message, 'error')
+    }
+    else if (forgotStep.value === 3) {
+      if (forgotForm.value.newPassword.length < 6) return showToast('Password must be at least 6 digits', 'error')
+      const data = await authApi.resetPassword(forgotForm.value.email, forgotForm.value.newPassword)
+      if (data.success) {
+        showToast(data.message, 'success')
+        isForgotPassword.value = false
+        form.value.password = ''
+      } else showToast(data.message, 'error')
+    }
+  } catch (e) {
+    showToast('Fail connecting to Server', 'error')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function showToast(message, type = 'success') {
@@ -99,11 +290,11 @@ async function handleAuth() {
   const { name, email, password } = form.value
 
   if (!email || !password) {
-    showToast('សូមបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់', 'error')
+    showToast('Please enter your email and password', 'error')
     return
   }
   if (!isLogin.value && !name) {
-    showToast('សូមបញ្ចូលឈ្មោះរបស់អ្នក', 'error')
+    showToast('Please enter your username', 'error')
     return
   }
 
@@ -117,19 +308,18 @@ async function handleAuth() {
       if (isLogin.value) {
         sessionStorage.setItem('currentUser', JSON.stringify(data.user))
         if (data.session_id) sessionStorage.setItem('session_id', data.session_id)
-        showToast('ចូលគណនីបានជោគជ័យ!', 'success')
-        setTimeout(() => {
-          router.push(data.user.role === 'admin' ? '/admin' : '/dashboard')
-        }, 1200)
+
+        sessionStorage.setItem('flashMessage', 'Login success!')
+        router.push(data.user.role === 'admin' ? '/admin' : '/dashboard')
       } else {
-        showToast('ចុះឈ្មោះបានជោគជ័យ! សូមចូលគណនី។', 'success')
+        showToast('Register success! Please login', 'success')
         toggleMode()
       }
     } else {
-      showToast(data.message || 'មានបញ្ហាក្នុងការភ្ជាប់ទិន្នន័យ', 'error')
+      showToast(data.message || 'Fail to connecting data', 'error')
     }
   } catch (e) {
-    showToast('មិនអាចភ្ជាប់ទៅកាន់ Server បានទេ។', 'error')
+    showToast('Unable to connect to server.', 'error')
   } finally {
     isLoading.value = false
   }
@@ -163,6 +353,47 @@ async function handleAuth() {
   align-items: flex-end;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 25px 0 15px;
+  color: #94A3B8;
+  font-size: 13px;
+}
+
+.input-login::placeholder,
+.login-btn {
+  font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+}
+
+.logo-login {
+  width: 120px;
+  height: auto;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.divider span {
+  padding: 0 10px;
+}
+
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.nsm7Bb-HzV7m-LgbsSe {
+  background-color: red !important;
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -178,22 +409,15 @@ async function handleAuth() {
   z-index: 2;
   width: 100%;
   padding: 40px 30px 50px;
-  margin-top: 10rem;
+  margin-top: 5rem;
 }
 
 .header {
   margin-bottom: 40px;
-}
-
-.header i {
-  font-size: 40px;
-  color: #D4AF37;
-  margin-bottom: 15px;
-  display: inline-block;
+  text-align: center;
 }
 
 .header h1 {
-  font-family: 'Playfair Display', serif;
   font-size: 38px;
   color: #F8FAFC;
   line-height: 1.1;
@@ -212,12 +436,12 @@ async function handleAuth() {
 
 .input-box input {
   width: 100%;
-  padding: 20px 20px 20px 55px;
+  padding: 15px 15px 15px 45px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   color: #F8FAFC;
-  font-size: 16px;
+  font-size: 12px;
   outline: none;
   backdrop-filter: blur(5px);
   transition: all 0.3s;
@@ -229,7 +453,22 @@ async function handleAuth() {
   top: 50%;
   transform: translateY(-50%);
   color: #94A3B8;
-  font-size: 18px;
+  font-size: 14px;
+}
+
+/* បន្ថែមកូដថ្មីនេះពីក្រោម */
+.input-box .eye-icon {
+  left: auto;
+  right: 20px;
+  /* រុញមកខាងស្តាំវិញ */
+  cursor: pointer;
+  /* លោតរូបដៃពេលដាក់ Mouse លើ */
+  transition: color 0.3s ease;
+}
+
+.input-box .eye-icon:hover {
+  color: #D4AF37;
+  /* ដូរទៅពណ៌មាសពេលយក Mouse ដាក់ពីលើ */
 }
 
 .input-box input:focus {
@@ -243,11 +482,11 @@ async function handleAuth() {
 
 .login-btn {
   width: 100%;
-  padding: 20px;
+  padding: 16px;
   background: #D4AF37;
   color: #0F172A;
   border: none;
-  border-radius: 12px;
+  border-radius: 9999px;
   font-size: 16px;
   text-align: center;
   cursor: pointer;
@@ -272,7 +511,7 @@ async function handleAuth() {
   font-size: 14px;
 }
 
-.switch-text span {
+.switch-text .link-register-form {
   color: #F8FAFC;
   font-weight: 700;
   text-decoration: underline;
@@ -347,6 +586,7 @@ async function handleAuth() {
 }
 
 .toast-msg {
+  font-family: 'Kantumruy Pro', 'Inter', sans-serif;
   font-size: 14px;
   line-height: 1.4;
 }
